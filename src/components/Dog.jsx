@@ -1,8 +1,13 @@
-import React from "react";
+import React, { useEffect } from "react";
 import * as THREE from "three";
 // this is the thing which renderer return as dom element i.e what three js camera is seeing
 import { useThree } from "@react-three/fiber";
-import { OrbitControls, useGLTF, useTexture } from "@react-three/drei";
+import {
+  OrbitControls,
+  useGLTF,
+  useTexture,
+  useAnimations,
+} from "@react-three/drei";
 import { texture } from "three/tsl";
 
 function Dog() {
@@ -12,6 +17,12 @@ function Dog() {
     gl.toneMapping = THREE.ReinhardToneMapping;
     gl.outputColorSpace = THREE.SRGBColorSpace;
   });
+
+  // now animation 4or5 part
+  const { actions } = useAnimations(model.animations, model.scene);
+  useEffect(() => {
+    actions["Take 001"].play(); // take 001 is the animation store in the model
+  }, [actions]);
 
   // basically we added the texture of the model instead of that huge code by simple jpg image
   // const textures = useTexture({
@@ -24,23 +35,36 @@ function Dog() {
   // textures.sampleMatCap.colorSpace = THREE.SRGBColorSpace; // to load  in hd format not define old style
 
   // another way to prevent repeating coding
-
-  const [normalMap, sampleMatCap] = useTexture([
+  // adding texture to model and branches
+  const [normalMap, sampleMatCap, branchMap, branchNormalMap] = useTexture([
     "/dog_normals.jpg",
     "matcap/mat-2.png",
+    "/branches_diffuse.jpg",
+    "/branches_normals.jpg",
   ]).map((texture) => {
     texture.flipY = false;
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   });
 
+  // if u travers for all child just below it provide calculatio to every child so stroe that in variable
+  const dogMaterial = new THREE.MeshMatcapMaterial({
+    normalMap: normalMap,
+    matcap: sampleMatCap, // fake lighting effect hai
+  });
+
+  // material for branches
+  const branchMaterial = new THREE.MeshMatcapMaterial({
+    normalMap: branchNormalMap,
+    map: branchMap, // ye real color effect
+  });
+
   // traverse all the object of the model
   model.scene.traverse((child) => {
     if (child.name.includes("DOG")) {
-      child.material = new THREE.MeshMatcapMaterial({
-        normalMap: normalMap,
-        matcap: sampleMatCap,
-      });
+      child.material = dogMaterial;
+    } else {
+      child.material = branchMaterial;
     }
   });
 
@@ -63,3 +87,4 @@ export default Dog;
 // this hook has callback which has camera , scene , gl gl = renderer
 // useGLTF hook is used to allow to load the model in scene
 // by default 3js shows us fade colors
+// useAnimations is the hook for animation of the model
