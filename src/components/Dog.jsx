@@ -1,62 +1,59 @@
-import React, { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import * as THREE from "three";
-// this is the thing which renderer return as dom element i.e what three js camera is seeing
 import { useThree } from "@react-three/fiber";
-import {
-  OrbitControls,
-  useGLTF,
-  useTexture,
-  useAnimations,
-} from "@react-three/drei";
-import { texture } from "three/tsl";
 
-function Dog() {
+import gsap from "gsap";
+import { useGSAP } from "@gsap/react";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+import { useGLTF, useTexture, useAnimations } from "@react-three/drei";
+
+const Dog = () => {
+  gsap.registerPlugin(useGSAP());
+  gsap.registerPlugin(ScrollTrigger);
+
   const model = useGLTF("/models/dog.drc.glb");
-  useThree(({ scene, camera, gl }) => {
+  useThree(({ camera, gl }) => {
     camera.position.z = 0.5;
     gl.toneMapping = THREE.ReinhardToneMapping;
     gl.outputColorSpace = THREE.SRGBColorSpace;
   });
 
-  // now animation 4or5 part
+  // now animation
   const { actions } = useAnimations(model.animations, model.scene);
   useEffect(() => {
-    actions["Take 001"].play(); // take 001 is the animation store in the model
+    actions["Take 001"].play();
   }, [actions]);
 
-  // basically we added the texture of the model instead of that huge code by simple jpg image
-  // const textures = useTexture({
-  //   normalMap: "/dog_normals.jpg",
-  //   sampleMatCap: "matcap/mat-2.png",
-  // });
-
-  // read that how fliping images help
-  // textures.normalMap.flipY = false;
-  // textures.sampleMatCap.colorSpace = THREE.SRGBColorSpace; // to load  in hd format not define old style
-
-  // another way to prevent repeating coding
-  // adding texture to model and branches
-  const [normalMap, sampleMatCap, branchMap, branchNormalMap] = useTexture([
+  //adding texture to dog components
+  const [normalMap, sampleMatCap] = useTexture([
     "/dog_normals.jpg",
     "matcap/mat-2.png",
-    "/branches_diffuse.jpg",
-    "/branches_normals.jpg",
   ]).map((texture) => {
     texture.flipY = false;
     texture.colorSpace = THREE.SRGBColorSpace;
     return texture;
   });
 
-  // if u travers for all child just below it provide calculatio to every child so stroe that in variable
+  // adding texture to branches
+  const [branchMap, branchNormalMap] = useTexture([
+    "/branches_diffuse.jpg",
+    "/branches_normals.jpg",
+  ]).map((texture) => {
+    texture.colorSpace = THREE.SRGBColorSpace;
+    return texture;
+  });
+
+  // material for dog components
   const dogMaterial = new THREE.MeshMatcapMaterial({
     normalMap: normalMap,
-    matcap: sampleMatCap, // fake lighting effect hai
+    matcap: sampleMatCap, // fake lighting effect
   });
 
   // material for branches
   const branchMaterial = new THREE.MeshMatcapMaterial({
     normalMap: branchNormalMap,
-    map: branchMap, // ye real color effect
+    map: branchMap, // real color effect
   });
 
   // traverse all the object of the model
@@ -68,6 +65,44 @@ function Dog() {
     }
   });
 
+  const dogModel = useRef(model);
+  // scrolling animation
+  useGSAP(() => {
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: "#section-1",
+        endTrigger: "#section-3",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: true,
+      },
+    });
+
+    tl.to(dogModel.current.scene.position, {
+      z: "-=0.75",
+      y: "+=0.1",
+    })
+      .to(dogModel.current.scene.rotation, {
+        x: `+=${Math.PI / 15}`,
+      })
+      .to(
+        dogModel.current.scene.rotation,
+        {
+          y: `-=${Math.PI}`,
+        },
+        "third",
+      )
+      .to(
+        dogModel.current.scene.position,
+        {
+          x: "-=0.5",
+          z: "+=0.5",
+          y: "+=0.025",
+        },
+        "third",
+      );
+  }, []);
+
   return (
     <>
       <primitive
@@ -76,10 +111,9 @@ function Dog() {
         rotation={[0, Math.PI / 4, 0]}
       ></primitive>
       <directionalLight position={[0, 5, 5]} color={0xffffff} intensity={10} />
-      <OrbitControls />
     </>
   );
-}
+};
 
 export default Dog;
 
@@ -88,3 +122,4 @@ export default Dog;
 // useGLTF hook is used to allow to load the model in scene
 // by default 3js shows us fade colors
 // useAnimations is the hook for animation of the model
+// now for scrolling animation gsap
