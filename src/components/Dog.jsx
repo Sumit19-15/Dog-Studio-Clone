@@ -14,7 +14,8 @@ const Dog = () => {
 
   const model = useGLTF("/models/dog.drc.glb");
   useThree(({ camera, gl }) => {
-    camera.position.z = 0.5;
+    camera.position.z = 0.34;
+    camera.position.y = 0.05;
     gl.toneMapping = THREE.ReinhardToneMapping;
     gl.outputColorSpace = THREE.SRGBColorSpace;
   });
@@ -88,18 +89,18 @@ const Dog = () => {
       .to(
         dogModel.current.scene.rotation,
         {
-          y: `-=${Math.PI}`,
+          y: `-=${Math.PI}/1.2`,
         },
-        "third",
+        "thrid",
       )
       .to(
         dogModel.current.scene.position,
         {
-          x: "-=0.5",
-          z: "+=0.5",
-          y: "+=0.025",
+          x: "-=0.45",
+          z: "+=0.25",
+          y: "+=0.03",
         },
-        "third",
+        "thrid",
       );
   }, []);
 
@@ -107,8 +108,8 @@ const Dog = () => {
     <>
       <primitive
         object={model.scene}
-        position={[0.15, -0.6, 0]}
-        rotation={[0, Math.PI / 4, 0]}
+        position={[0.15, -0.54,0.05]}
+        rotation={[-0.2, Math.PI / 5.5, -0.06]}
       ></primitive>
       <directionalLight position={[0, 5, 5]} color={0xffffff} intensity={10} />
     </>
